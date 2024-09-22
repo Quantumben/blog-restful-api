@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PostController extends Controller
 {
+    use AuthorizesRequests;
+    
     public function index()
     {
-        return Post::all();
+        $posts = Post::with('user')->get();
+
+        return response()->json($posts);
     }
 
     public function show(Post $post)
@@ -24,14 +28,13 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:255|unique:posts',
             'content' => 'required|string',
         ]);
 
-        $post = Post::create([
+        $post = $request->user()->posts()->create([
             'title' => $request->title,
             'content' => $request->content,
-            'user_id' => Auth::id(),
         ]);
 
         return response()->json($post, 201);
